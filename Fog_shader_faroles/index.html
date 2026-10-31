@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PLEASE NO CHANGES BELOW THIS LINE (UNTIL I SAY SO) -->
+  <script language="javascript" type="text/javascript" src="libraries/p5.min.js"></script>
+  <script language="javascript" type="text/javascript" src="Fog_shader_faroles.js"></script>
+  <!-- OK, YOU CAN MAKE CHANGES BELOW THIS LINE AGAIN -->
+
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+      background-color: #1a1a1a; /* Un color oscuro de fondo general acorde a la escena */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* Contenedor flexible para alinear el panel y el lienzo lado a lado */
+    .app-container {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 20px;
+    }
+
+    /* Panel de control lateral estilizado */
+    .control-panel {
+      width: 260px;
+      background: #2a2a2a;
+      border: 1px solid #3d3d3d;
+      border-radius: 12px;
+      padding: 20px;
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .control-panel h3 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      font-size: 18px;
+      border-bottom: 1px solid #3d3d3d;
+      padding-bottom: 10px;
+      color: #00bfff; /* Detalle neón azul */
+    }
+
+    .control-group {
+      margin-bottom: 20px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: #cccccc;
+    }
+
+    .control-group label span {
+      float: right;
+      font-weight: bold;
+      color: #00bfff;
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* Contenedor donde p5 colocará el canvas de 800x600 */
+    #canvas-container {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      background-color: #000;
+      line-height: 0; /* Evita espacios extra debajo del canvas */
+    }
+
+    
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Panel de control de Shaders externo -->
+    <div class="control-panel">
+      <h3>Configuración Niebla</h3>
+      <!-- Agrega esto en tu panel de control HTML -->
+      <p id="rango-niebla-container">
+        Rango de niebla activo: <span id="rango-val">50 - 2180</span> unidades
+      </p>
+      
+      <div class="control-group">
+        <label>Fog Near: <span id="near-val">150</span></label>
+        <input type="range" id="near-slider" min="50" max="600" value="150">
+      </div>
+
+      <div class="control-group">
+        <label>Fog Far: <span id="far-val">1500</span></label>
+        <input type="range" id="far-slider" min="500" max="2500" value="1500">
+      </div>
+
+      <div class="control-group">
+        <label>Fog Tone (Atmósfera): <span id="tone-val">20</span></label>
+        <input type="range" id="tone-slider" min="0" max="255" value="20">
+      </div>
+      
+    </div>
+    
+
+    <!-- Contenedor del lienzo 3D -->
+    <div id="canvas-container"></div>
+  </div>
+</body>
+</html>
