@@ -6,6 +6,7 @@
 
   <!-- PLEASE NO CHANGES BELOW THIS LINE (UNTIL I SAY SO) -->
   <script language="javascript" type="text/javascript" src="libraries/p5.min.js"></script>
+  <script language="javascript" type="text/javascript" src="audio_viento.js"></script>
   <script language="javascript" type="text/javascript" src="Fog_shader_faroles.js"></script>
   <!-- OK, YOU CAN MAKE CHANGES BELOW THIS LINE AGAIN -->
 
@@ -28,7 +29,8 @@
 
     /* Panel de control lateral estilizado */
     .control-panel {
-      width: 260px;
+      width: 280px;
+      flex-shrink: 0;
       background: #2a2a2a;
       border: 1px solid #3d3d3d;
       border-radius: 12px;
@@ -39,15 +41,28 @@
 
     .control-panel h3 {
       margin-top: 0;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       font-size: 18px;
       border-bottom: 1px solid #3d3d3d;
       padding-bottom: 10px;
       color: #00bfff; /* Detalle neón azul */
     }
 
+    .control-panel h4 {
+      margin: 22px 0 12px;
+      font-size: 14px;
+      color: #00bfff;
+      border-bottom: 1px solid #3d3d3d;
+      padding-bottom: 6px;
+    }
+
     .control-group {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      transition: opacity 0.2s;
+    }
+
+    .control-group.inactivo {
+      opacity: 0.35;
     }
 
     .control-group label {
@@ -63,14 +78,136 @@
       color: #00bfff;
     }
 
-    .control-group input[type="range"] {
+    .control-group input[type="range"],
+    .control-group select {
       width: 100%;
       margin: 0;
       cursor: pointer;
     }
 
+    .control-group select {
+      background: #1f1f1f;
+      color: #fff;
+      border: 1px solid #3d3d3d;
+      border-radius: 6px;
+      padding: 4px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #cccccc;
+      cursor: pointer;
+    }
+
+    .info {
+      font-size: 12px;
+      color: #aaaaaa;
+      margin: 0 0 10px;
+      line-height: 1.4;
+    }
+
+    .info b {
+      color: #00bfff;
+    }
+
+    /* --- Barra de visualización del rango de niebla --- */
+    .rango-barra {
+      position: relative;
+      height: 22px;
+      border-radius: 6px;
+      border: 1px solid #3d3d3d;
+      background: #111;
+      overflow: hidden;
+    }
+
+    .rango-gradiente {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Franja donde viven los faroles (profundidad posible) */
+    .rango-faroles {
+      position: absolute;
+      bottom: 0;
+      height: 4px;
+      background: rgba(255, 170, 60, 0.85);
+    }
+
+    .rango-marca {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #00bfff;
+    }
+
+    .rango-escala {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #888;
+      margin-top: 3px;
+    }
+
+    /* --- Indicador de viento --- */
+    .viento-barra {
+      position: relative;
+      height: 12px;
+      border-radius: 6px;
+      background: #1f1f1f;
+      border: 1px solid #3d3d3d;
+      overflow: hidden;
+    }
+
+    .viento-barra::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: #666;
+    }
+
+    #viento-relleno {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      background: linear-gradient(90deg, #00bfff, #7fe0ff);
+    }
+
+    /* --- Botones --- */
+    .boton {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #00bfff;
+      background: transparent;
+      color: #00bfff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .boton:hover {
+      background: #00bfff;
+      color: #1a1a1a;
+    }
+
+    .boton.activo {
+      background: #00bfff;
+      color: #1a1a1a;
+    }
+
     /* Contenedor donde p5 colocará el canvas de 800x600 */
     #canvas-container {
+      position: relative;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -78,7 +215,42 @@
       line-height: 0; /* Evita espacios extra debajo del canvas */
     }
 
-    
+    /* Instrucción superpuesta sobre el lienzo */
+    #instruccion {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 10px 18px;
+      border-radius: 20px;
+      background: rgba(10, 15, 35, 0.7);
+      border: 1px solid rgba(0, 191, 255, 0.5);
+      color: #e8f7ff;
+      font-size: 15px;
+      line-height: 1.3;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.8s;
+    }
+
+    #instruccion.oculta {
+      opacity: 0;
+    }
+
+    /* Leyenda del modo debug */
+    #leyenda-debug {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 12px;
+      line-height: 1.3;
+      pointer-events: none;
+      display: none;
+    }
   </style>
 </head>
 
@@ -87,31 +259,81 @@
     <!-- Panel de control de Shaders externo -->
     <div class="control-panel">
       <h3>Configuración Niebla</h3>
-      <!-- Agrega esto en tu panel de control HTML -->
-      <p id="rango-niebla-container">
-        Rango de niebla activo: <span id="rango-val">50 - 2180</span> unidades
+
+      <!-- Visualización del rango de niebla -->
+      <p class="info">
+        Rango de niebla activo: <b id="rango-val">150 - 1500</b> unidades
       </p>
-      
+      <div class="rango-barra" title="Profundidad desde la cámara: claro = sin niebla, color = niebla total">
+        <div class="rango-gradiente" id="rango-gradiente"></div>
+        <div class="rango-faroles" id="rango-faroles"></div>
+        <div class="rango-marca" id="marca-near"></div>
+        <div class="rango-marca" id="marca-far"></div>
+      </div>
+      <div class="rango-escala"><span>0</span><span>cámara → profundidad</span><span id="escala-max">2600</span></div>
+      <p class="info" style="margin-top:8px">
+        Faroles visibles: <b id="visibles-val">0</b> / <span id="total-val">0</span>
+      </p>
+
+      <div class="control-group">
+        <label>Tipo de niebla:</label>
+        <select id="modo-select">
+          <option value="0" selected>Lineal (Near → Far)</option>
+          <option value="1">Exponencial</option>
+          <option value="2">Exponencial²</option>
+        </select>
+      </div>
+
       <div class="control-group">
         <label>Fog Near: <span id="near-val">150</span></label>
         <input type="range" id="near-slider" min="50" max="600" value="150">
       </div>
 
-      <div class="control-group">
+      <div class="control-group" id="grupo-far">
         <label>Fog Far: <span id="far-val">1500</span></label>
         <input type="range" id="far-slider" min="500" max="2500" value="1500">
       </div>
 
-      <div class="control-group">
-        <label>Fog Tone (Atmósfera): <span id="tone-val">20</span></label>
-        <input type="range" id="tone-slider" min="0" max="255" value="20">
+      <div class="control-group inactivo" id="grupo-densidad">
+        <label>Densidad: <span id="densidad-val">1.2</span></label>
+        <input type="range" id="densidad-slider" min="0.3" max="4" step="0.1" value="1.2">
       </div>
-      
+
+      <div class="control-group">
+        <label>Fog Tone (Atmósfera): <span id="tone-val">60</span></label>
+        <input type="range" id="tone-slider" min="0" max="255" value="60">
+      </div>
+
+      <div class="control-group">
+        <label>Brillo farol: <span id="glow-val">1.6</span></label>
+        <input type="range" id="glow-slider" min="0.5" max="3" step="0.1" value="1.6">
+      </div>
+
+      <div class="control-group">
+        <label class="checkbox-row">
+          <input type="checkbox" id="debug-check"> Modo minimalista factor de niebla
+        </label>
+      </div>
+
+      <button class="boton" id="reset-btn">Restablecer valores</button>
+
+      <h4>Viento</h4>
+      <div class="viento-barra"><div id="viento-relleno"></div></div>
+      <div class="rango-escala"><span>←</span><span id="viento-val">sin viento</span><span>→</span></div>
+
+      <h4>Sonido</h4>
+      <button class="boton" id="audio-btn">🔊 Activar sonido de viento</button>
+      <div class="control-group">
+        <label>Volumen: <span id="volumen-val">70</span></label>
+        <input type="range" id="volumen-slider" min="0" max="100" value="70">
+      </div>
     </div>
-    
 
     <!-- Contenedor del lienzo 3D -->
-    <div id="canvas-container"></div>
+    <div id="canvas-container">
+      <div id="instruccion">🌬️ Mueva el mouse para generar viento de izq. a derecha</div>
+      <div id="leyenda-debug">Modo debug: blanco = sin niebla · negro = niebla total</div>
+    </div>
   </div>
 </body>
 </html>
